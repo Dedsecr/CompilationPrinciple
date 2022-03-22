@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include "node.h"
 
+extern NodeP root;
 // extern int yydebug;
 
 int main(int argc, char **argv)

@@ -1,10 +1,14 @@
+
+#ifndef node_h
+#define node_h
+
 #include <stdarg.h>
 #include <stdio.h>
-#include <assert.h>
 #include <string.h>
-#include <string>
+#include <stdlib.h>
 
-const int MAX_CHILD_NUM = 10;
+#define MAX_CHILD_NUM 10
+#define MAX_STRING_LEN 32
 #define NONTERMINAL 0
 #define TERMINAL_INT 1
 #define TERMINAL_FLOAT 2
@@ -16,56 +20,64 @@ struct Node
     int data_int, child_num, line;
     short type;
     float data_float;
-    std::string data_string, data_string_data;
-    Node *children[MAX_CHILD_NUM];
-
-    Node() {}
-    Node(int line, int child_num, ...)
-    {
-        va_list valist;
-
-        this->type = NONTERMINAL;
-        this->child_num = child_num;
-
-        va_start(valist, child_num);
-        for (int i = 0; i < child_num; i++)
-        {
-            this->children[i] = va_arg(valist, Node *);
-        }
-        va_end(valist);
-    }
-    Node(Node *child, float data_float)
-    {
-        assert(child == NULL);
-        this->type = TERMINAL_INT;
-        this->child_num = 0;
-        this->data_float = data_float;
-    }
-    Node(Node *child, int data_int)
-    {
-        assert(child == NULL);
-        this->type = TERMINAL_FLOAT;
-        this->child_num = 0;
-        this->data_int = data_int;
-    }
-    Node(Node *child, std::string data_string)
-    {
-        assert(child == NULL);
-        this->type = TERMINAL_STRING;
-        this->child_num = 0;
-        this->data_string = data_string;
-    }
-    Node(Node *child, int type, std::string data_string, std::string data_string_data)
-    {
-        assert(child == NULL);
-        this->type = TERMINAL_TYPE_OR_ID;
-        this->child_num = 0;
-        this->data_string = data_string;
-        this->data_string_data = data_string_data;
-    }
+    char data_string[MAX_STRING_LEN], data_string_data[MAX_STRING_LEN];
+    struct Node *children[MAX_CHILD_NUM];
 };
+typedef struct Node Node;
+typedef Node *NodeP;
+NodeP get_nonterminal_node(int line, char *data_string, int child_num, ...)
+{
+    va_list valist;
+    NodeP node = (NodeP)malloc(sizeof(Node));
 
-void print_node_tree(Node *root, int level)
+    node->type = NONTERMINAL;
+    node->child_num = child_num;
+    node->line = line;
+    strcpy(node->data_string, data_string);
+
+    va_start(valist, child_num);
+    for (int i = 0; i < child_num; i++)
+    {
+        node->children[i] = va_arg(valist, NodeP );
+    }
+    va_end(valist);
+    return node;
+}
+NodeP get_terminal_node_float(float data_float)
+{
+    NodeP node = (NodeP)malloc(sizeof(Node));
+    node->type = TERMINAL_INT;
+    node->child_num = 0;
+    node->data_float = data_float;
+    return node;
+}
+NodeP get_terminal_node_int(int data_int)
+{
+    NodeP node = (NodeP)malloc(sizeof(Node));
+    node->type = TERMINAL_FLOAT;
+    node->child_num = 0;
+    node->data_int = data_int;
+    return node;
+}
+NodeP get_terminal_node(char *data_string)
+{
+    NodeP node = (NodeP)malloc(sizeof(Node));
+    node->type = TERMINAL_STRING;
+    node->child_num = 0;
+    strcpy(node->data_string, data_string);
+    return node;
+}
+NodeP get_terminal_node_string(char *data_string, char *data_string_data)
+{
+    NodeP node = (NodeP)malloc(sizeof(Node));
+    node->type = TERMINAL_TYPE_OR_ID;
+    node->child_num = 0;
+    strcpy(node->data_string, data_string);
+    strcpy(node->data_string_data, data_string_data);
+    return node;
+}
+
+void print_node_tree(NodeP root, int level)
 {
     if (root == NULL)
         return;
@@ -75,7 +87,7 @@ void print_node_tree(Node *root, int level)
 
     if (root->type == NONTERMINAL)
     {
-        printf("%s (%d)\n", root->data_string.c_str(), root->line);
+        printf("%s (%d)\n", root->data_string, root->line);
         for (int i = 0; i < root->child_num; i++)
             print_node_tree(root->children[i], level + 1);
     }
@@ -89,10 +101,12 @@ void print_node_tree(Node *root, int level)
     }
     else if (root->type == TERMINAL_STRING)
     {
-        printf("%s\n", root->data_string.c_str());
+        printf("%s\n", root->data_string);
     }
     else if (root->type == TERMINAL_TYPE_OR_ID)
     {
-        printf("%s: %s\n", root->data_string.c_str(), root->data_string_data.c_str());
+        printf("%s: %s\n", root->data_string, root->data_string_data);
     }
 }
+
+#endif
