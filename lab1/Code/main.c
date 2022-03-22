@@ -1,3 +1,6 @@
+# include <stdio.h>
+
+extern int yydebug;
 
 int main(int argc, char** argv) {
     if (argc <= 1) return 1;
@@ -8,6 +11,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    yydebug = 1;
     yyrestart(f);
     yyparse();
     return 0;

@@ -1,7 +1,17 @@
 %{
     # include "syntax.tab.h"
+
+    int yycolumn = 1;
+
+    //#define YY_USER_ACTION \
+        yylloc.first_line = yylloc.last_line = yylineno; \
+        yylloc.first_column = yycolumn; \
+        yylloc.last_column = yycolumn + yyleng - 1; \
+        yycolumn += yyleng;
+    
 %}
 
+ws [ \t]+
 digit [0-9]
 letter [_a-zA-Z]
 
@@ -34,9 +44,17 @@ ELSE else
 WHILE while
 
 %%
-
-{FLOAT}+ {printf("Float Value: %f\n", atof(yytext)); return FLOAT;}
-{ID}+ {printf("ID Value: %s\n", yytext); return ID;}
+\n {yycolumn = 1;}
+{ws} {printf("Blank\n");}
+{TYPE} {printf("TYPE\n"); return TYPE;}
+{RETURN} {printf("RETURN\n"); return RETURN;}
+{IF} {printf("IF\n"); return IF;}
+{ELSE} {printf("ELSE\n"); return ELSE;}
+{WHILE} {printf("WHILE\n"); return WHILE;}
+{STRUCT} {printf("STRUCT\n"); return STRUCT;}
+{INT} {printf("INT Value: %d\n", atoi(yytext)); return INT;}
+{FLOAT} {printf("Float Value: %f\n", atof(yytext)); return FLOAT;}
+{ID} {printf("ID Value: %s\n", yytext); return ID;}
 {SEMI} {printf("SEMI\n"); return SEMI;}
 {COMMA} {printf("COMMA\n"); return COMMA;}
 {ASSIGNOP} {printf("ASSIGNOP\n"); return ASSIGNOP;}
@@ -55,13 +73,7 @@ WHILE while
 {RB} {printf("RB\n"); return RB;}
 {LC} {printf("LC\n"); return LC;}
 {RC} {printf("RC\n"); return RC;}
-{TYPE} {printf("TYPE\n"); return TYPE;}
-{RETURN} {printf("RETURN\n"); return RETURN;}
-{IF} {printf("IF\n"); return IF;}
-{ELSE} {printf("ELSE\n"); return ELSE;}
-{WHILE} {printf("WHILE\n"); return WHILE;}
-{STRUCT} {printf("STRUCT\n"); return STRUCT;}
-. {printf("error\n");}
+. {printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);}
 
 %%
 
