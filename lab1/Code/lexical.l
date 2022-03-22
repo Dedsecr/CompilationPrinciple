@@ -17,7 +17,7 @@ letter [_a-zA-Z]
 
 INT 0|[1-9]{digit}*
 FLOAT {digit}+.{digit}+|{digit}*\.{digit}+[eE][+-]?{digit}+
-ID {letter}[{letter}{digit}]*
+ID {letter}({letter}|{digit})*
 SEMI ";"
 COMMA ","
 ASSIGNOP "="
@@ -44,21 +44,18 @@ ELSE else
 WHILE while
 
 %%
-\n {yycolumn = 1;}
+
 {ws} {printf("Blank\n");}
-{TYPE} {printf("TYPE\n"); return TYPE;}
-{RETURN} {printf("RETURN\n"); return RETURN;}
+\n|\r {yycolumn = 1;}
+
 {IF} {printf("IF\n"); return IF;}
 {ELSE} {printf("ELSE\n"); return ELSE;}
 {WHILE} {printf("WHILE\n"); return WHILE;}
+{TYPE} {printf("TYPE\n"); return TYPE;}
 {STRUCT} {printf("STRUCT\n"); return STRUCT;}
-{INT} {printf("INT Value: %d\n", atoi(yytext)); return INT;}
-{FLOAT} {printf("Float Value: %f\n", atof(yytext)); return FLOAT;}
-{ID} {printf("ID Value: %s\n", yytext); return ID;}
-{SEMI} {printf("SEMI\n"); return SEMI;}
-{COMMA} {printf("COMMA\n"); return COMMA;}
-{ASSIGNOP} {printf("ASSIGNOP\n"); return ASSIGNOP;}
+{RETURN} {printf("RETURN\n"); return RETURN;}
 {RELOP} {printf("RELOP\n"); return RELOP;}
+
 {PLUS} {printf("PLUS\n"); return PLUS;}
 {MINUS} {printf("MINUS\n"); return MINUS;}
 {STAR} {printf("STAR\n"); return STAR;}
@@ -66,13 +63,24 @@ WHILE while
 {AND} {printf("AND\n"); return AND;}
 {OR} {printf("OR\n"); return OR;}
 {NOT} {printf("NOT\n"); return NOT;}
+
 {DOT} {printf("DOT\n"); return DOT;}
+{SEMI} {printf("SEMI\n"); return SEMI;}
+{COMMA} {printf("COMMA\n"); return COMMA;}
+{ASSIGNOP} {printf("ASSIGNOP\n"); return ASSIGNOP;}
+
 {LP} {printf("LP\n"); return LP;}
 {RP} {printf("RP\n"); return RP;}
 {LB} {printf("LB\n"); return LB;}
 {RB} {printf("RB\n"); return RB;}
 {LC} {printf("LC\n"); return LC;}
 {RC} {printf("RC\n"); return RC;}
+
+{ID} {printf("ID Value: %s\n", yytext); return ID;}
+{INT} {printf("INT Value: %d\n", atoi(yytext)); return INT;}
+{FLOAT} {printf("Float Value: %f\n", atof(yytext)); return FLOAT;}
+
+
 . {printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext);}
 
 %%

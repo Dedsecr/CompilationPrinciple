@@ -105,7 +105,7 @@ StmtList : Stmt StmtList {}
 Stmt : Exp SEMI {}
     | CompSt {}
     | RETURN Exp SEMI {}
-    | IF LP Exp RP Stmt {}
+    | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE {}
     | IF LP Exp RP Stmt ELSE Stmt {}
     | WHILE LP Exp RP Stmt {}
     ;
