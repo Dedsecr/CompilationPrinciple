@@ -5,11 +5,11 @@
 #include <string>
 
 const int MAX_CHILD_NUM = 10;
-#define NONTERMINAL_NODE 0
-#define TERMINAL_NODE_INT 1
-#define TERMINAL_NODE_FLOAT 2
-#define TERMINAL_NODE_STRING 3
-#define TERMINAL_NODE_TYPE_OR_ID 4
+#define NONTERMINAL 0
+#define TERMINAL_INT 1
+#define TERMINAL_FLOAT 2
+#define TERMINAL_STRING 3
+#define TERMINAL_TYPE_OR_ID 4
 
 struct Node
 {
@@ -24,7 +24,7 @@ struct Node
     {
         va_list valist;
 
-        this->type = NONTERMINAL_NODE;
+        this->type = NONTERMINAL;
         this->child_num = child_num;
 
         va_start(valist, child_num);
@@ -34,31 +34,31 @@ struct Node
         }
         va_end(valist);
     }
-    Node(int line, Node *child, float data_float)
+    Node(Node *child, float data_float)
     {
         assert(child == NULL);
-        this->type = TERMINAL_NODE_INT;
+        this->type = TERMINAL_INT;
         this->child_num = 0;
         this->data_float = data_float;
     }
-    Node(int line, Node *child, int data_int)
+    Node(Node *child, int data_int)
     {
         assert(child == NULL);
-        this->type = TERMINAL_NODE_FLOAT;
+        this->type = TERMINAL_FLOAT;
         this->child_num = 0;
         this->data_int = data_int;
     }
-    Node(int line, Node *child, std::string data_string)
+    Node(Node *child, std::string data_string)
     {
         assert(child == NULL);
-        this->type = TERMINAL_NODE_STRING;
+        this->type = TERMINAL_STRING;
         this->child_num = 0;
         this->data_string = data_string;
     }
-    Node(int line, Node *child, int type, std::string data_string, std::string data_string_data)
+    Node(Node *child, int type, std::string data_string, std::string data_string_data)
     {
         assert(child == NULL);
-        this->type = TERMINAL_NODE_TYPE_OR_ID;
+        this->type = TERMINAL_TYPE_OR_ID;
         this->child_num = 0;
         this->data_string = data_string;
         this->data_string_data = data_string_data;
@@ -73,25 +73,25 @@ void print_node_tree(Node *root, int level)
     for (int i = 0; i < level; i++)
         printf("  ");
 
-    if (root->type == NONTERMINAL_NODE)
+    if (root->type == NONTERMINAL)
     {
         printf("%s (%d)\n", root->data_string.c_str(), root->line);
         for (int i = 0; i < root->child_num; i++)
             print_node_tree(root->children[i], level + 1);
     }
-    else if (root->type == TERMINAL_NODE_INT)
+    else if (root->type == TERMINAL_INT)
     {
         printf("INT: %d\n", root->data_int);
     }
-    else if (root->type == TERMINAL_NODE_FLOAT)
+    else if (root->type == TERMINAL_FLOAT)
     {
         printf("FLOAT: %f\n", root->data_float);
     }
-    else if (root->type == TERMINAL_NODE_STRING)
+    else if (root->type == TERMINAL_STRING)
     {
         printf("%s\n", root->data_string.c_str());
     }
-    else if (root->type == TERMINAL_NODE_TYPE_OR_ID)
+    else if (root->type == TERMINAL_TYPE_OR_ID)
     {
         printf("%s: %s\n", root->data_string.c_str(), root->data_string_data.c_str());
     }
