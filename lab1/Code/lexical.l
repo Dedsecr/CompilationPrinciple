@@ -3,6 +3,7 @@
     # include "node.h"
 
     int yycolumn = 1;
+    extern unsigned lexError;
 
     #define YY_USER_ACTION \
         yylloc.first_line = yylloc.last_line = yylineno; \
@@ -11,6 +12,8 @@
         yycolumn += yyleng;
     
 %}
+
+%option yylineno
 
 ws [ \t]+
 digit [0-9]
@@ -82,7 +85,7 @@ WHILE while
 {FLOAT} { yylval.node = get_terminal_node_float(atof(yytext)); return FLOAT; }
 
 
-. { printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+. { lexError = 1; printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
 
 %%
 

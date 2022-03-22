@@ -1,6 +1,6 @@
 
-#ifndef node_h
-#define node_h
+#ifndef NODE_H
+#define NODE_H
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -23,12 +23,11 @@ struct Node
     char data_string[MAX_STRING_LEN], data_string_data[MAX_STRING_LEN];
     struct Node *children[MAX_CHILD_NUM];
 };
-typedef struct Node Node;
-typedef Node *NodeP;
-NodeP get_nonterminal_node(int line, char *data_string, int child_num, ...)
+typedef struct Node *NodeP;
+static NodeP get_nonterminal_node(int line, char *data_string, int child_num, ...)
 {
     va_list valist;
-    NodeP node = (NodeP)malloc(sizeof(Node));
+    NodeP node = (NodeP)malloc(sizeof(struct Node));
 
     node->type = NONTERMINAL;
     node->child_num = child_num;
@@ -43,33 +42,33 @@ NodeP get_nonterminal_node(int line, char *data_string, int child_num, ...)
     va_end(valist);
     return node;
 }
-NodeP get_terminal_node_float(float data_float)
+static NodeP get_terminal_node_float(float data_float)
 {
-    NodeP node = (NodeP)malloc(sizeof(Node));
-    node->type = TERMINAL_INT;
+    NodeP node = (NodeP)malloc(sizeof(struct Node));
+    node->type = TERMINAL_FLOAT;
     node->child_num = 0;
     node->data_float = data_float;
     return node;
 }
-NodeP get_terminal_node_int(int data_int)
+static NodeP get_terminal_node_int(int data_int)
 {
-    NodeP node = (NodeP)malloc(sizeof(Node));
-    node->type = TERMINAL_FLOAT;
+    NodeP node = (NodeP)malloc(sizeof(struct Node));
+    node->type = TERMINAL_INT;
     node->child_num = 0;
     node->data_int = data_int;
     return node;
 }
-NodeP get_terminal_node(char *data_string)
+static NodeP get_terminal_node(char *data_string)
 {
-    NodeP node = (NodeP)malloc(sizeof(Node));
+    NodeP node = (NodeP)malloc(sizeof(struct Node));
     node->type = TERMINAL_STRING;
     node->child_num = 0;
     strcpy(node->data_string, data_string);
     return node;
 }
-NodeP get_terminal_node_string(char *data_string, char *data_string_data)
+static NodeP get_terminal_node_string(char *data_string, char *data_string_data)
 {
-    NodeP node = (NodeP)malloc(sizeof(Node));
+    NodeP node = (NodeP)malloc(sizeof(struct Node));
     node->type = TERMINAL_TYPE_OR_ID;
     node->child_num = 0;
     strcpy(node->data_string, data_string);
@@ -77,7 +76,7 @@ NodeP get_terminal_node_string(char *data_string, char *data_string_data)
     return node;
 }
 
-void print_node_tree(NodeP root, int level)
+static void print_node_tree(NodeP root, int level)
 {
     if (root == NULL)
         return;

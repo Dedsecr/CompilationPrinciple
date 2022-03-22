@@ -2,11 +2,12 @@
     # include <stdio.h>
     # include "lex.yy.c"
     # include "node.h"
-    NodeP root;
+    struct Node * root;
+    extern unsigned synError;
 %}
 
 %union {
-    NodeP node;
+    struct Node * node;
 }
 
 // terminal symbols
@@ -63,14 +64,15 @@
 %%
 
 // High-level Definitions
-Program : ExtDefList { char *name = "Program"; $$ = get_nonterminal_node(@$.first_line, name, 1, $1); root = $$; }
+Program : ExtDefList { $$ = get_nonterminal_node(@$.first_line, "Program", 1, $1); root = $$; }
     ;
-ExtDefList : ExtDef ExtDefList { char *name = "ExtDefList"; $$ = get_nonterminal_node(@$.first_line, name, 2, $1, $2); }
+ExtDefList : ExtDef ExtDefList { $$ = get_nonterminal_node(@$.first_line, "ExtDefList", 2, $1, $2); }
     |   { $$ = NULL; }
     ;
-ExtDef : Specifier ExtDecList SEMI { char *name = "ExtDef"; $$ = get_nonterminal_node(@$.first_line, name, 3, $1, $2, $3); }
-    | Specifier SEMI { char *name = "ExtDef"; $$ = get_nonterminal_node(@$.first_line, name, 2, $1, $2); }
-    | Specifier FunDec CompSt { char *name = "ExtDef"; $$ = get_nonterminal_node(@$.first_line, name, 3, $1, $2, $3); }
+ExtDef : Specifier ExtDecList SEMI { $$ = get_nonterminal_node(@$.first_line, "ExtDef", 3, $1, $2, $3); }
+    | Specifier SEMI { $$ = get_nonterminal_node(@$.first_line, "ExtDef", 2, $1, $2); }
+    | Specifier FunDec CompSt { $$ = get_nonterminal_node(@$.first_line, "ExtDef", 3, $1, $2, $3); }
+    | error SEMI { synError = 1; }
     ;
 ExtDecList : VarDec { $$ = get_nonterminal_node(@$.first_line, "ExtDecList", 1, $1); }
     | VarDec COMMA ExtDecList { $$ = get_nonterminal_node(@$.first_line, "ExtDecList", 3, $1, $2, $3); }
@@ -82,6 +84,7 @@ Specifier : TYPE { $$ = get_nonterminal_node(@$.first_line, "Specifier", 1, $1);
     ;
 StructSpecifier : STRUCT OptTag LC DefList RC { $$ = get_nonterminal_node(@$.first_line, "StructSpecifier", 5, $1, $2, $3, $4, $5); }
     | STRUCT Tag { $$ = get_nonterminal_node(@$.first_line, "StructSpecifier", 2, $1, $2); }
+    | error RC { synError = 1; }
     ;
 OptTag : ID { $$ = get_nonterminal_node(@$.first_line, "OptTag", 1, $1); }
     | { $$ = NULL; }
@@ -92,9 +95,11 @@ Tag : ID { $$ = get_nonterminal_node(@$.first_line, "Tag", 1, $1); }
 // Declarators
 VarDec : ID { $$ = get_nonterminal_node(@$.first_line, "VarDec", 1, $1); }
     | VarDec LB INT RB { $$ = get_nonterminal_node(@$.first_line, "VarDec", 4, $1, $2, $3, $4); }
+    | error RB { synError = 1; }
     ;
 FunDec : ID LP VarList RP { $$ = get_nonterminal_node(@$.first_line, "FunDec", 4, $1, $2, $3, $4); }
     | ID LP RP { $$ = get_nonterminal_node(@$.first_line, "FunDec", 3, $1, $2, $3); }
+    | error RP { synError = 1; }
     ;
 VarList : ParamDec COMMA VarList { $$ = get_nonterminal_node(@$.first_line, "VarList", 3, $1, $2, $3); }
     | ParamDec { $$ = get_nonterminal_node(@$.first_line, "VarList", 1, $1); }
@@ -104,6 +109,7 @@ ParamDec : Specifier VarDec { $$ = get_nonterminal_node(@$.first_line, "ParamDec
 
 // statements
 CompSt : LC DefList StmtList RC { $$ = get_nonterminal_node(@$.first_line, "CompSt", 4, $1, $2, $3, $4); }
+    | error RC { synError = 1; }
     ;
 StmtList : Stmt StmtList { $$ = get_nonterminal_node(@$.first_line, "StmtList", 2, $1, $2); }
     | { $$ = NULL; }
@@ -114,6 +120,7 @@ Stmt : Exp SEMI { $$ = get_nonterminal_node(@$.first_line, "Stmt", 2, $1, $2); }
     | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE { $$ = get_nonterminal_node(@$.first_line, "Stmt", 5, $1, $2, $3, $4, $5); }
     | IF LP Exp RP Stmt ELSE Stmt { $$ = get_nonterminal_node(@$.first_line, "Stmt", 7, $1, $2, $3, $4, $5, $6, $7); }
     | WHILE LP Exp RP Stmt { $$ = get_nonterminal_node(@$.first_line, "Stmt", 5, $1, $2, $3, $4, $5); }
+    | error SEMI { synError = 1; }
     ;
 
 // Local Definitions
@@ -121,6 +128,7 @@ DefList : Def DefList { $$ = get_nonterminal_node(@$.first_line, "DefList", 2, $
     | { $$ = NULL; }
     ;
 Def : Specifier DecList SEMI { $$ = get_nonterminal_node(@$.first_line, "Def", 3, $1, $2, $3); }
+    | error SEMI { synError = 1; }
     ;
 DecList : Dec { $$ = get_nonterminal_node(@$.first_line, "DecList", 1, $1); }
     | Dec COMMA DecList { $$ = get_nonterminal_node(@$.first_line, "DecList", 3, $1, $2, $3); }
@@ -148,6 +156,7 @@ Exp : Exp ASSIGNOP Exp { $$ = get_nonterminal_node(@$.first_line, "Exp", 3, $1, 
     | ID { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
     | INT { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
     | FLOAT { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
+    | error RP { synError = 1; }
     ;
 Args : Exp COMMA Args { $$ = get_nonterminal_node(@$.first_line, "Args", 3, $1, $2, $3); }
     | Exp { $$ = get_nonterminal_node(@$.first_line, "Args", 1, $1); }
@@ -157,4 +166,5 @@ Args : Exp COMMA Args { $$ = get_nonterminal_node(@$.first_line, "Args", 3, $1, 
 
 yyerror(char* msg) {
     fprintf(stderr, "Error type B at line %d: %s.\n", yylineno, msg);
+    
 }

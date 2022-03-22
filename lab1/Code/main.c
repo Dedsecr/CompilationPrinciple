@@ -4,6 +4,8 @@
 extern NodeP root;
 // extern int yydebug;
 
+unsigned lexError = 0, synError = 0;
+
 int main(int argc, char **argv)
 {
     if (argc <= 1)
@@ -19,5 +21,7 @@ int main(int argc, char **argv)
     // yydebug = 1;
     yyrestart(f);
     yyparse();
+    if (!lexError && !synError)
+        print_node_tree(root, 0);
     return 0;
 }

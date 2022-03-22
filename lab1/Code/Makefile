@@ -5,7 +5,6 @@
 CC = gcc
 FLEX = flex
 BISON = bison
-CFLAGS = -std=c99
 
 # 编译目标：src目录下的所有.c文件
 CFILES = $(shell find ./ -name "*.c")
@@ -32,11 +31,19 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
-.PHONY: clean test1 test2
+.PHONY: clean test1 test2 sample1 sample2 sample3 sample4
 test1:
 	./parser ../Test/test1.cmm
 test2:
 	./parser ../Test/test2.cmm
+sample1:
+	./parser ../Test/sample1.cmm
+sample2:
+	./parser ../Test/sample2.cmm
+sample3:
+	./parser ../Test/sample3.cmm
+sample4:
+	./parser ../Test/sample4.cmm
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)
