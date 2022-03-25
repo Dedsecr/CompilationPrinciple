@@ -20,7 +20,7 @@ digit [0-9]
 letter [_a-zA-Z]
 
 INT 0|[1-9]{digit}*
-FLOAT {digit}+.{digit}+|{digit}*\.{digit}+[eE][+-]?{digit}+
+FLOAT {digit}+\.{digit}+|{digit}*\.{digit}+[eE][+-]?{digit}+
 ID {letter}({letter}|{digit})*
 SEMI ";"
 COMMA ","
@@ -85,8 +85,8 @@ WHILE while
 {FLOAT} { yylval.node = get_terminal_node_float(atof(yytext)); return FLOAT; }
 
 
-. { lexError = 1; printf("Error type A at Line %d: Mysterious characters \'%s\'\n", yylineno, yytext); }
+. { lexError = 1; printf("Error type A at Line %d: Mysterious characters \"%s\".\n", yylineno, yytext); }
 
 %%
 
-//{user subroutines}
+//{user subroutines}otes 
