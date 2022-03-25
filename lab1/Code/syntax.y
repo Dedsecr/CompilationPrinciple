@@ -122,6 +122,10 @@ Stmt : Exp SEMI { $$ = get_nonterminal_node(@$.first_line, "Stmt", 2, $1, $2); }
     | IF LP Exp RP Stmt ELSE Stmt { $$ = get_nonterminal_node(@$.first_line, "Stmt", 7, $1, $2, $3, $4, $5, $6, $7); }
     | WHILE LP Exp RP Stmt { $$ = get_nonterminal_node(@$.first_line, "Stmt", 5, $1, $2, $3, $4, $5); }
     | error SEMI { synError = 1; }
+    | WHILE LP error RP Stmt { synError = 1; }
+    | IF LP error RP Stmt %prec LOWER_THAN_ELSE { synError = 1; }
+    | IF LP error RP Stmt ELSE Stmt { synError = 1; }
+    | RETURN error SEMI { synError = 1; }
     ;
 
 // Local Definitions
@@ -130,12 +134,15 @@ DefList : Def DefList { $$ = get_nonterminal_node(@$.first_line, "DefList", 2, $
     ;
 Def : Specifier DecList SEMI { $$ = get_nonterminal_node(@$.first_line, "Def", 3, $1, $2, $3); }
     | Specifier error SEMI { synError = 1; }
+    | Specifier DecList error { synError = 1; }
     ;
 DecList : Dec { $$ = get_nonterminal_node(@$.first_line, "DecList", 1, $1); }
     | Dec COMMA DecList { $$ = get_nonterminal_node(@$.first_line, "DecList", 3, $1, $2, $3); }
+    | Dec COMMA error { synError = 1; }
     ;
 Dec : VarDec { $$ = get_nonterminal_node(@$.first_line, "Dec", 1, $1); }
     | VarDec ASSIGNOP Exp { $$ = get_nonterminal_node(@$.first_line, "Dec", 3, $1, $2, $3); }
+    | VarDec ASSIGNOP error { synError = 1; }
     ;
 
 // Expressions
@@ -157,9 +164,11 @@ Exp : Exp ASSIGNOP Exp { $$ = get_nonterminal_node(@$.first_line, "Exp", 3, $1, 
     | ID { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
     | INT { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
     | FLOAT { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
+    | Exp error { synError = 1; }
     ;
 Args : Exp COMMA Args { $$ = get_nonterminal_node(@$.first_line, "Args", 3, $1, $2, $3); }
     | Exp { $$ = get_nonterminal_node(@$.first_line, "Args", 1, $1); }
+    | error COMMA Args { synError = 1; }
     ;
 
 %%
