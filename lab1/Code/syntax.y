@@ -164,7 +164,6 @@ Exp : Exp ASSIGNOP Exp { $$ = get_nonterminal_node(@$.first_line, "Exp", 3, $1, 
     | ID { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
     | INT { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
     | FLOAT { $$ = get_nonterminal_node(@$.first_line, "Exp", 1, $1); }
-    | Exp error { synError = 1; }
     ;
 Args : Exp COMMA Args { $$ = get_nonterminal_node(@$.first_line, "Args", 3, $1, $2, $3); }
     | Exp { $$ = get_nonterminal_node(@$.first_line, "Args", 1, $1); }

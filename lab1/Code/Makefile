@@ -31,7 +31,7 @@ syntax-c: $(YFILE)
 -include $(patsubst %.o, %.d, $(OBJS))
 
 # 定义的一些伪目标
-.PHONY: clean test1 test2 sample1 sample2 sample3 sample4
+.PHONY: clean test1 test2 sample1 sample2 sample3 sample4 sample5
 test1:
 	./parser ../Test/test1.cmm
 test2:
@@ -44,6 +44,8 @@ sample3:
 	./parser ../Test/sample3.cmm
 sample4:
 	./parser ../Test/sample4.cmm
+sample5:
+	./parser ../Test/sample5.cmm
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output
 	rm -f $(OBJS) $(OBJS:.o=.d)
