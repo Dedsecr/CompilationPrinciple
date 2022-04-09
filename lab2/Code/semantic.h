@@ -36,56 +36,48 @@ struct FieldList {
     FieldListP next;
 };
 struct Var {
-    int is_def_struct;
+    int in_struct;
     FieldListP field;
+    int line;
     VarP next;
-    int line_number;
 };
 struct Function {
     char* name;
     FieldListP field;
     TypeP return_type;
-    int num_declaration;
-    int num_definition;
-    int line_number;
+    int defined;
+    int line;
     FunctionP next;
 };
 
 // create a basic type
 TypeP create_type_basic(int basic_type);
-
 // create an array type
 TypeP create_type_array(TypeP elem, int size);
-
 // create a struct type
 TypeP create_type_struct(FieldListP structure);
-
 // create a field list
 FieldListP create_fieldlist(char* name, TypeP type, FieldListP next);
-
 // create a table
-VarP create_table(int is_def_struct, FieldListP field, VarP next, int line_number);
-
+VarP create_var(int in_struct, FieldListP field, VarP next, int line);
 // create a function
-FunctionP create_function(char* name, FieldListP field, TypeP return_type, int num_declaration, int num_definition, int line_number, FunctionP next);
+FunctionP create_function(char* name, FieldListP field, TypeP return_type, int defined, int line, FunctionP next);
 
 // hash function
 unsigned int hash_pjw(char* name);
 
 // check if a name is in the table
-VarP find_struct_var_table(char* name);
-
+VarP find_var_table(char* name);
 // add a field to the table
-void insert_struct_var_table(FieldListP field_list, int line, int is_def);
+void insert_var_table(FieldListP field_list, int line, int in_struct);
 
 // check if a name is in the function table
 FunctionP find_function_table(char* name);
-
 // add a function to the function table
 void insert_function_table(FunctionP func);
 
-// check if there is a function with the same name
-int conflict_between_functions(FunctionP funca, FunctionP funcb);
+// compare two functions
+int funccmp(FunctionP funca, FunctionP funcb);
 
 // compare two field lists
 int fieldcmp(FieldListP x, FieldListP y, int compare_name);
@@ -93,8 +85,8 @@ int fieldcmp(FieldListP x, FieldListP y, int compare_name);
 // compare two types
 int typecmp(TypeP a, TypeP b);
 
-TypeP find_domain_in_struct(FieldListP type, char* name);
-int find_param_in_function(FunctionP func, NodeP now);
+// find field in a struct
+TypeP find_struct_field(FieldListP type, char* name);
 
 // program
 void Program(NodeP now);
@@ -102,6 +94,8 @@ void Program(NodeP now);
 void ExtDefList(NodeP x);
 // def of global variables, functions, structs
 void ExtDef(NodeP now);
+// def of global variables
+void ExtDecList(NodeP now, TypeP type);
 // description of type, including TYPE and struct
 TypeP Specifier(NodeP now);
 // description of struct
@@ -119,7 +113,6 @@ FieldListP DecList(NodeP now, TypeP type, int restr);
 FieldListP Dec(NodeP now, TypeP type, int restr);
 // def of variables
 FieldListP VarDec(NodeP now, TypeP type, int restr);
-void ExtDecList(NodeP now, TypeP type);
 
 // def of header of functions
 void FunDec(NodeP now, TypeP type, int restr);

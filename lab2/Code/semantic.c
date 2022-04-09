@@ -1,6 +1,6 @@
 #include "semantic.h"
 
-VarP struct_var_table[TABLE_SIZE + 1];   // table of struct and variables
+VarP var_table[TABLE_SIZE + 1];            // table of struct and variables
 FunctionP function_table[TABLE_SIZE + 1];  // table of functions
 int num_unnamed_struct = 0;
 
@@ -35,23 +35,22 @@ FieldListP create_fieldlist(char* name, TypeP type, FieldListP next) {
     return field;
 }
 
-VarP create_table(int is_def_struct, FieldListP field, VarP next, int line_number) {
-    VarP struct_var_table = (VarP)malloc(sizeof(struct Var));
-    struct_var_table->is_def_struct = is_def_struct;
-    struct_var_table->field = field;
-    struct_var_table->next = next;
-    struct_var_table->line_number = line_number;
-    return struct_var_table;
+VarP create_var(int in_struct, FieldListP field, VarP next, int line) {
+    VarP var_table = (VarP)malloc(sizeof(struct Var));
+    var_table->in_struct = in_struct;
+    var_table->field = field;
+    var_table->next = next;
+    var_table->line = line;
+    return var_table;
 }
 
-FunctionP create_function(char* name, FieldListP field, TypeP return_type, int num_declaration, int num_definition, int line_number, FunctionP next) {
+FunctionP create_function(char* name, FieldListP field, TypeP return_type, int defined, int line, FunctionP next) {
     FunctionP function = (FunctionP)malloc(sizeof(struct Function));
     function->name = name;
     function->field = field;
     function->return_type = return_type;
-    function->num_declaration = num_declaration;
-    function->num_definition = num_definition;
-    function->line_number = line_number;
+    function->defined = defined;
+    function->line = line;
     function->next = next;
     return function;
 }
@@ -66,9 +65,9 @@ unsigned int hash_pjw(char* name) {
     return val;
 }
 
-VarP find_struct_var_table(char* name) {
+VarP find_var_table(char* name) {
     unsigned int val = hash_pjw(name);
-    VarP x = struct_var_table[val];
+    VarP x = var_table[val];
     while (x != NULL) {
         if (strcmp(x->field->name, name) == 0)
             break;
@@ -77,18 +76,17 @@ VarP find_struct_var_table(char* name) {
     return x;
 }
 
-void insert_struct_var_table(FieldListP field_list, int line, int is_def) {
+void insert_var_table(FieldListP field_list, int line, int in_struct) {
     int val = hash_pjw(field_list->name);
-    if (struct_var_table[val] == NULL) {
-        struct_var_table[val] = create_table(is_def, field_list, NULL, line);
-    } else {
-        VarP new_table = create_table(is_def, field_list, NULL, line);
-        VarP now = struct_var_table[val];
-        while (now->next != NULL) {
-            now = now->next;
-        }
-        now->next = new_table;
+    if (var_table[val] == NULL) {
+        var_table[val] = create_var(in_struct, field_list, NULL, line);
+        return;
     }
+    VarP now = var_table[val];
+    while (now->next != NULL) {
+        now = now->next;
+    }
+    now->next = create_var(in_struct, field_list, NULL, line);
 }
 
 FunctionP find_function_table(char* name) {
@@ -115,7 +113,11 @@ void insert_function_table(FunctionP func) {
     now->next = func;
 }
 
-int conflict_between_functions(FunctionP x, FunctionP y) {
+int funccmp(FunctionP x, FunctionP y) {
+    if (x == NULL && y == NULL)
+        return 0;
+    if (x == NULL || y == NULL)
+        return 1;
     if (strcmp(x->name, y->name))
         return 1;
     if (fieldcmp(x->field, y->field, 1))
@@ -150,7 +152,8 @@ int typecmp(TypeP x, TypeP y) {
         return fieldcmp(x->structure, y->structure, 1);
 }
 
-TypeP find_domain_in_struct(FieldListP field_list, char* name) {
+TypeP find_struct_field(FieldListP field_list, char* name) {
+    // printf("@@@ %d %s %s %d %s\n", __LINE__, name, field_list->name, field_list->type->type, field_list->type->structure->);
     while (field_list != NULL) {
         // printf("@@@ %d %s %s %d\n", __LINE__, name, field_list->name, field_list->type->type);
         if (strcmp(name, field_list->name) == 0)
@@ -158,17 +161,6 @@ TypeP find_domain_in_struct(FieldListP field_list, char* name) {
         field_list = field_list->next;
     }
     return NULL;
-}
-int find_param_in_function(FunctionP func, NodeP x) {
-    FieldListP field_list = func->field;
-    if (x == NULL)
-        return field_list != NULL;
-    // Args -> Exp COMMA Args| Exp
-    FieldListP arg_field = Args(x);
-    if (fieldcmp(field_list, arg_field, 0) == 0)
-        return 0;
-    else
-        return 1;
 }
 
 void Program(NodeP x) {
@@ -182,17 +174,6 @@ void ExtDefList(NodeP x) {
         return;
     ExtDef(x->children[0]);
     ExtDefList(x->children[1]);
-    for (int i = 0; i <= TABLE_SIZE; i++)
-        if (function_table[i] != NULL) {
-            FunctionP now = function_table[i];
-            while (now != NULL) {
-                if (now->num_definition == 0) {
-                    printf("%d ", __LINE__);
-                    printf("Error type 18 at Line %d: Undefined function \"%s\".\n", now->line_number, now->name);
-                }
-                now = now->next;
-            }
-        }
 }
 
 void ExtDef(NodeP x) {
@@ -229,12 +210,12 @@ TypeP StructSpecifier(NodeP x) {
         if (struct_field->name == NULL)
             return NULL;
         // printf("@@%d %s@@\n", __LINE__, struct_field->name);
-        insert_struct_var_table(struct_field, x->children[0]->line, DEF_IN_STRUCT);
+        insert_var_table(struct_field, x->children[0]->line, DEF_IN_STRUCT);
         return create_type_struct(struct_field);
     } else {
         // StructSpecifier -> STRUCT Tag
         // Tag -> ID
-        VarP now = find_struct_var_table(x->children[1]->children[0]->data_string_data);
+        VarP now = find_var_table(x->children[1]->children[0]->data_string_data);
         if (now == NULL || now->field->type->type != STRUCT) {
             printf("%d ", __LINE__);
             printf("Error type 17 at Line %d: Undefined structure \"%s\".\n", x->line, x->children[1]->children[0]->data_string_data);
@@ -253,7 +234,7 @@ char* OptTag(NodeP x) {
         return strdup(name);
     } else {
         // OptTag -> ID
-        if (find_struct_var_table(x->children[0]->data_string_data) != NULL) {
+        if (find_var_table(x->children[0]->data_string_data) != NULL) {
             printf("%d ", __LINE__);
             printf("Error type 16 at Line %d: Duplicated name \"%s\".\n", x->line, x->children[0]->data_string_data);
             return NULL;
@@ -327,7 +308,7 @@ FieldListP VarDec(NodeP x, TypeP type, int restr) {
         FieldListP field_list = create_fieldlist(x->children[0]->data_string_data, type, NULL);
         if (restr == DEC_FUNC)
             return field_list;
-        if (find_struct_var_table(field_list->name)) {
+        if (find_var_table(field_list->name)) {
             if (restr == DEF_STRUCT) {
                 printf("%d ", __LINE__);
                 printf("Error type 15 at Line %d: Redefined field \"%s\".\n", x->line, x->children[0]->data_string_data);
@@ -338,7 +319,7 @@ FieldListP VarDec(NodeP x, TypeP type, int restr) {
                 return NULL;
             }
         }
-        insert_struct_var_table(field_list, x->children[0]->line, DEF_NOT_IN_STRUCT);
+        insert_var_table(field_list, x->children[0]->line, DEF_NOT_IN_STRUCT);
         return field_list;
     } else {
         // VarDec -> VarDec LB INT RB
@@ -359,48 +340,31 @@ void ExtDecList(NodeP x, TypeP type) {
 
 void FunDec(NodeP x, TypeP type, int restr) {
     // FunDec -> ID LP VarList RP | ID LP RP
-    FunctionP func = create_function(x->children[0]->data_string_data, NULL, type, 0, 0, x->line, NULL);
+    FunctionP func = create_function(x->children[0]->data_string_data, NULL, type, 0, x->line, NULL);
     if (x->child_num == 4) {
         func->field = VarList(x->children[2], restr);
     }
     FunctionP find_func = find_function_table(func->name);
     if (restr == DEC_FUNC) {
         if (find_func == NULL) {
-            func->num_declaration++;
             insert_function_table(func);
-        } else {
-            int is_conflict = conflict_between_functions(find_func, func);
-            if (is_conflict == 0) {
-                find_func->num_declaration++;
-            } else {
-                printf("%d ", __LINE__);
-                printf("Error type 19 at Line %d: Inconsistent num_declaration of function_table \"%s\".\n", x->line, func->name);
-                return;
-            }
         }
     } else {
         if (find_func == NULL) {
-            func->num_definition++;
+            func->defined = 1;
             insert_function_table(func);
         } else {
-            int is_conflict = conflict_between_functions(find_func, func);
-            if (is_conflict == 0) {
-                if (func->num_definition != 0) {
+            if (funccmp(find_func, func) == 0) {
+                if (func->defined) {
                     printf("%d ", __LINE__);
                     printf("Error type 4 at Line %d: Redefined function \"%s\".\n", x->line, func->name);
                     return;
                 } else
-                    find_func->num_definition++;
+                    find_func->defined = 1;
             } else {
-                if (find_func->num_definition == 0) {
-                    printf("%d ", __LINE__);
-                    printf("Error type 19 at Line %d: Inconsistent num_definition of function_table \"%s\".\n", x->line, func->name);
-                    return;
-                } else {
-                    printf("%d ", __LINE__);
-                    printf("Error type 4 at Line %d: Redefined function \"%s\".\n", x->line, func->name);
-                    return;
-                }
+                printf("%d ", __LINE__);
+                printf("Error type 4 at Line %d: Redefined function \"%s\".\n", x->line, func->name);
+                return;
             }
         }
     }
@@ -492,8 +456,8 @@ TypeP Exp(NodeP x) {
             return create_type_basic(TYPE_FLOAT);
         } else if (strcmp(child->data_string, "ID\0") == 0) {
             // Exp -> ID
-            VarP find_id = find_struct_var_table(child->data_string_data);
-            if (find_id == NULL || find_id->is_def_struct == DEF_IN_STRUCT) {
+            VarP find_id = find_var_table(child->data_string_data);
+            if (find_id == NULL || find_id->in_struct == DEF_IN_STRUCT) {
                 printf("%d ", __LINE__);
                 printf("Error type 1 at Line %d: Undefined variable \"%s\".\n", x->line, child->data_string_data);
                 return NULL;
@@ -576,7 +540,7 @@ TypeP Exp(NodeP x) {
             printf("Error type 13 at Line %d: Illegal use of \".\".\n", x->line);
             return NULL;
         }
-        TypeP type_right = find_domain_in_struct(type_left->structure, x->children[2]->data_string_data);
+        TypeP type_right = find_struct_field(type_left->structure->type->structure, x->children[2]->data_string_data);
         if (type_right == NULL) {
             printf("%d ", __LINE__);
             printf("Error type 14 at Line %d: Non-existent field \"%s\".\n", x->line, x->children[2]->data_string_data);
@@ -611,22 +575,22 @@ TypeP Exp(NodeP x) {
     if (strcmp(x->children[0]->data_string, "ID\0") == 0 && strcmp(x->children[1]->data_string, "LP\0") == 0) {
         // Exp -> ID LP Args RP
         // Exp -> ID LP RP
-        if (find_struct_var_table(x->children[0]->data_string_data) != NULL) {
+        if (find_var_table(x->children[0]->data_string_data) != NULL) {
             printf("%d ", __LINE__);
             printf("Error type 11 at Line %d: Not a function.\n", x->line);
             return NULL;
         }
         FunctionP id_function = find_function_table(x->children[0]->data_string_data);
-        if (id_function == NULL || id_function->num_definition == 0) {
+        if (id_function == NULL || id_function->defined == 0) {
             printf("%d ", __LINE__);
             printf("Error type 2 at Line %d: Undefined function \"%s\".\n", x->line, x->children[0]->data_string_data);
             return NULL;
         }
         if (x->child_num == 4) {
-            if (find_param_in_function(id_function, x->children[2]) == 0)
+            if (fieldcmp(id_function->field, Args(x->children[2]), 0) == 0)
                 return id_function->return_type;
         } else {
-            if (find_param_in_function(id_function, NULL) == 0)
+            if (fieldcmp(id_function->field, NULL, 0) == 0)
                 return id_function->return_type;
         }
 
