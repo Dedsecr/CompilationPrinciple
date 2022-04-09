@@ -181,10 +181,10 @@ void ExtDef(NodeP x) {
     TypeP type_specifier = Specifier(x->children[0]);
     if (x->child_num == 2)
         return;
-    if (strcmp(x->children[1]->data_string, "ExtDecList\0") == 0) {
+    if (strcmp(x->children[1]->data_string, "ExtDecList") == 0) {
         // ExtDef -> Specifier ExtDecList SEMI
         ExtDecList(x->children[1], type_specifier);
-    } else if (strcmp(x->children[2]->data_string, "CompSt\0") == 0) {
+    } else if (strcmp(x->children[2]->data_string, "CompSt") == 0) {
         // ExtDef -> Specifier FunDec CompSt
         FunDec(x->children[1], type_specifier, DEF_FUNC);
         CompSt(x->children[2], type_specifier);
@@ -193,18 +193,18 @@ void ExtDef(NodeP x) {
 
 TypeP Specifier(NodeP x) {
     // Specifier -> TYPE | StructSpecifier
-    if (strcmp(x->children[0]->data_string, "TYPE\0") == 0) {
-        if (strcmp(x->children[0]->data_string_data, "int\0") == 0)
+    if (strcmp(x->children[0]->data_string, "TYPE") == 0) {
+        if (strcmp(x->children[0]->data_string_data, "int") == 0)
             return create_type_basic(TYPE_INT);
         else
             return create_type_basic(TYPE_FLOAT);
-    } else if (strcmp(x->children[0]->data_string, "StructSpecifier\0") == 0) {
+    } else if (strcmp(x->children[0]->data_string, "StructSpecifier") == 0) {
         return StructSpecifier(x->children[0]);
     }
 }
 
 TypeP StructSpecifier(NodeP x) {
-    if (strcmp(x->children[1]->data_string, "OptTag\0") == 0) {
+    if (strcmp(x->children[1]->data_string, "OptTag") == 0) {
         // StructSpecifier -> STRUCT OptTag LC DefList RC
         FieldListP struct_field = create_fieldlist(OptTag(x->children[1]), create_type_struct(DefList(x->children[3], DEF_STRUCT)), NULL);
         if (struct_field->name == NULL)
@@ -217,7 +217,7 @@ TypeP StructSpecifier(NodeP x) {
         // Tag -> ID
         VarP now = find_var_table(x->children[1]->children[0]->data_string_data);
         if (now == NULL || now->field->type->type != STRUCT) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 17 at Line %d: Undefined structure \"%s\".\n", x->line, x->children[1]->children[0]->data_string_data);
             return NULL;
         }
@@ -235,7 +235,7 @@ char* OptTag(NodeP x) {
     } else {
         // OptTag -> ID
         if (find_var_table(x->children[0]->data_string_data) != NULL) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 16 at Line %d: Duplicated name \"%s\".\n", x->line, x->children[0]->data_string_data);
             return NULL;
         }
@@ -288,13 +288,13 @@ FieldListP Dec(NodeP x, TypeP type, int restr) {
     } else {
         // Dec -> VarDec ASSIGNOP Exp
         if (restr == DEF_STRUCT) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 15 at Line %d: Initialize domain in structure.\n", x->children[0]->line);
             return NULL;
         }
         TypeP t = Exp(x->children[2]);
         if (typecmp(type, t) == 1) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 5 at Line %d: Type mismatched for assignment.\n", x->line);
             return NULL;
         }
@@ -310,11 +310,11 @@ FieldListP VarDec(NodeP x, TypeP type, int restr) {
             return field_list;
         if (find_var_table(field_list->name)) {
             if (restr == DEF_STRUCT) {
-                printf("%d ", __LINE__);
+                // printf("%d ", __LINE__);
                 printf("Error type 15 at Line %d: Redefined field \"%s\".\n", x->line, x->children[0]->data_string_data);
                 return NULL;
             } else if (restr == DEF_VAR || restr == DEF_FUNC) {
-                printf("%d ", __LINE__);
+                // printf("%d ", __LINE__);
                 printf("Error type 3 at Line %d: Redefined variable \"%s\".\n", x->line, x->children[0]->data_string_data);
                 return NULL;
             }
@@ -356,13 +356,13 @@ void FunDec(NodeP x, TypeP type, int restr) {
         } else {
             if (funccmp(find_func, func) == 0) {
                 if (func->defined) {
-                    printf("%d ", __LINE__);
+                    // printf("%d ", __LINE__);
                     printf("Error type 4 at Line %d: Redefined function \"%s\".\n", x->line, func->name);
                     return;
                 } else
                     find_func->defined = 1;
             } else {
-                printf("%d ", __LINE__);
+                // printf("%d ", __LINE__);
                 printf("Error type 4 at Line %d: Redefined function \"%s\".\n", x->line, func->name);
                 return;
             }
@@ -404,26 +404,26 @@ void StmtList(NodeP x, TypeP type) {
 }
 
 void Stmt(NodeP x, TypeP type) {
-    if (strcmp(x->children[0]->data_string, "CompSt\0") == 0) {
+    if (strcmp(x->children[0]->data_string, "CompSt") == 0) {
         // Stmt -> CompSt
         CompSt(x->children[0], type);
-    } else if (strcmp(x->children[0]->data_string, "Exp\0") == 0) {
+    } else if (strcmp(x->children[0]->data_string, "Exp") == 0) {
         // Stmt -> Exp SEMI
         Exp(x->children[0]);
-    } else if (strcmp(x->children[0]->data_string, "RETURN\0") == 0) {
+    } else if (strcmp(x->children[0]->data_string, "RETURN") == 0) {
         // Stmt -> RETURN Exp SEMI
         TypeP type_exp = Exp(x->children[1]);
         if (typecmp(type_exp, type) == 1) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 8 at Line %d: Type mismatched for return.\n", x->line);
         }
-    } else if (strcmp(x->children[0]->data_string, "IF\0") == 0) {
+    } else if (strcmp(x->children[0]->data_string, "IF") == 0) {
         // Stmt -> IF LP Exp RP Stmt | IF LP Exp RP Stmt ELSE Stmt
         TypeP type_exp = Exp(x->children[2]);
         if (type_exp == NULL)
             return;
         if (type_exp->type != BASIC || type_exp->basic_type != TYPE_INT) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 7 at Line %d: Type mismatched for operands.\n", x->children[2]->line);
             return;
         }
@@ -431,13 +431,13 @@ void Stmt(NodeP x, TypeP type) {
         if (x->children[6]) {
             Stmt(x->children[6], type);
         }
-    } else if (strcmp(x->children[0]->data_string, "WHILE\0") == 0) {
+    } else if (strcmp(x->children[0]->data_string, "WHILE") == 0) {
         // Stmt -> WHILE LP Exp RP Stmt
         TypeP type_exp = Exp(x->children[2]);
         if (type_exp == NULL)
             return;
         if (type_exp->type != BASIC || type_exp->basic_type != TYPE_INT) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 7 at Line %d: Type mismatched for operands.\n", x->children[2]->line);
             return;
         }
@@ -454,11 +454,11 @@ TypeP Exp(NodeP x) {
         } else if (child->type == TERMINAL_FLOAT) {
             // Exp -> FLOAT
             return create_type_basic(TYPE_FLOAT);
-        } else if (strcmp(child->data_string, "ID\0") == 0) {
+        } else if (strcmp(child->data_string, "ID") == 0) {
             // Exp -> ID
             VarP find_id = find_var_table(child->data_string_data);
             if (find_id == NULL || find_id->in_struct == DEF_IN_STRUCT) {
-                printf("%d ", __LINE__);
+                // printf("%d ", __LINE__);
                 printf("Error type 1 at Line %d: Undefined variable \"%s\".\n", x->line, child->data_string_data);
                 return NULL;
             }
@@ -466,44 +466,44 @@ TypeP Exp(NodeP x) {
         }
     }
     if (x->child_num == 2) {
-        if (strcmp(x->children[0]->data_string, "MINUS\0") == 0) {
+        if (strcmp(x->children[0]->data_string, "MINUS") == 0) {
             // Exp -> MINUS Exp
             return Exp(x->children[1]);
-        } else if (strcmp(x->children[0]->data_string, "NOT\0") == 0) {
+        } else if (strcmp(x->children[0]->data_string, "NOT") == 0) {
             // Exp -> NOT Exp
             TypeP return_type = Exp(x->children[1]);
             if (return_type == NULL)
                 return NULL;
             if (return_type->type == BASIC && return_type->basic_type == TYPE_INT)
                 return return_type;
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 7 at Line %d: Type mismatched for operands.\n", x->line);
             return NULL;
         }
     }
-    if (strcmp(x->children[1]->data_string, "ASSIGNOP\0") == 0) {
+    if (strcmp(x->children[1]->data_string, "ASSIGNOP") == 0) {
         // Exp -> Exp ASSIGNOP Exp
         // child -> ID | Exp LB Exp RB | Exp DOT ID
         NodeP child_child = x->children[0]->children[0];
-        if (strcmp(child_child->data_string, "ID\0") == 0 && x->children[0]->child_num == 1)
+        if (strcmp(child_child->data_string, "ID") == 0 && x->children[0]->child_num == 1)
             ;
-        else if (strcmp(child_child->data_string, "Exp\0") == 0 && strcmp(x->children[0]->children[1]->data_string, "LB\0") == 0)
+        else if (strcmp(child_child->data_string, "Exp") == 0 && strcmp(x->children[0]->children[1]->data_string, "LB") == 0)
             ;
-        else if (strcmp(child_child->data_string, "Exp\0") == 0 && strcmp(x->children[0]->children[1]->data_string, "DOT\0") == 0)
+        else if (strcmp(child_child->data_string, "Exp") == 0 && strcmp(x->children[0]->children[1]->data_string, "DOT") == 0)
             ;
         else {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", x->line);
             return NULL;
         }
         TypeP type_left = Exp(x->children[0]), type_right = Exp(x->children[2]);
         if (typecmp(type_left, type_right) == 0)
             return type_left;
-        printf("%d ", __LINE__);
+        // printf("%d ", __LINE__);
         printf("Error type 5 at Line %d: Type mismatched for assignment.\n", x->line);
         return NULL;
     }
-    if (strcmp(x->children[1]->data_string, "AND\0") == 0 || strcmp(x->children[1]->data_string, "OR\0") == 0) {
+    if (strcmp(x->children[1]->data_string, "AND") == 0 || strcmp(x->children[1]->data_string, "OR") == 0) {
         // Exp -> Exp AND Exp
         // Exp -> Exp OR Exp
         TypeP type_left = Exp(x->children[0]), type_right = Exp(x->children[2]);
@@ -511,11 +511,11 @@ TypeP Exp(NodeP x) {
             return NULL;
         if (typecmp(type_left, type_right) == 0 && type_left->type == BASIC && type_left->basic_type == TYPE_INT)
             return type_left;
-        printf("%d ", __LINE__);
+        // printf("%d ", __LINE__);
         printf("Error type 7 at Line %d: Type mismatched for operands.\n", x->line);
         return NULL;
     }
-    if (strcmp(x->children[1]->data_string, "PLUS\0") == 0 || strcmp(x->children[1]->data_string, "MINUS\0") == 0 || strcmp(x->children[1]->data_string, "STAR\0") == 0 || strcmp(x->children[1]->data_string, "DIV\0") == 0 || strcmp(x->children[1]->data_string, "RELOP\0") == 0) {
+    if (strcmp(x->children[1]->data_string, "PLUS") == 0 || strcmp(x->children[1]->data_string, "MINUS") == 0 || strcmp(x->children[1]->data_string, "STAR") == 0 || strcmp(x->children[1]->data_string, "DIV") == 0 || strcmp(x->children[1]->data_string, "RELOP") == 0) {
         // Exp -> Exp PLUS Exp
         // Exp -> Exp MINUS Exp
         // Exp -> Exp STAR Exp
@@ -525,36 +525,36 @@ TypeP Exp(NodeP x) {
         if (typecmp(type_left, type_right) == 0 && type_left != NULL && type_left->type == BASIC)
             return type_right;
         else {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 7 at Line %d: Type mismatched for operands.\n", x->line);
             return NULL;
         }
     }
-    if (strcmp(x->children[1]->data_string, "DOT\0") == 0) {
+    if (strcmp(x->children[1]->data_string, "DOT") == 0) {
         // Exp -> Exp DOT ID
         TypeP type_left = Exp(x->children[0]);
         if (type_left == NULL)
             return NULL;
         if (type_left->type != STRUCT) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 13 at Line %d: Illegal use of \".\".\n", x->line);
             return NULL;
         }
         TypeP type_right = find_struct_field(type_left->structure->type->structure, x->children[2]->data_string_data);
         if (type_right == NULL) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 14 at Line %d: Non-existent field \"%s\".\n", x->line, x->children[2]->data_string_data);
             return NULL;
         }
         return type_right;
     }
-    if (strcmp(x->children[1]->data_string, "LB\0") == 0) {
+    if (strcmp(x->children[1]->data_string, "LB") == 0) {
         // Exp -> Exp LB Exp RB
         TypeP type_left = Exp(x->children[0]);
         if (type_left == NULL)
             return NULL;
         if (type_left->type != ARRAY) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 10 at Line %d: Not an array.\n", x->children[0]->line);
             return NULL;
         }
@@ -564,25 +564,25 @@ TypeP Exp(NodeP x) {
         if (type_right->type == BASIC && type_right->basic_type == TYPE_INT) {
             return type_left->array.elem;
         }
-        printf("%d ", __LINE__);
+        // printf("%d ", __LINE__);
         printf("Error type 12 at Line %d: Not an integer.\n", x->children[0]->line);
         return NULL;
     }
-    if (strcmp(x->children[0]->data_string, "LP\0") == 0) {
+    if (strcmp(x->children[0]->data_string, "LP") == 0) {
         // Exp -> LP Exp RP
         return Exp(x->children[1]);
     }
-    if (strcmp(x->children[0]->data_string, "ID\0") == 0 && strcmp(x->children[1]->data_string, "LP\0") == 0) {
+    if (strcmp(x->children[0]->data_string, "ID") == 0 && strcmp(x->children[1]->data_string, "LP") == 0) {
         // Exp -> ID LP Args RP
         // Exp -> ID LP RP
         if (find_var_table(x->children[0]->data_string_data) != NULL) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 11 at Line %d: Not a function.\n", x->line);
             return NULL;
         }
         FunctionP id_function = find_function_table(x->children[0]->data_string_data);
         if (id_function == NULL || id_function->defined == 0) {
-            printf("%d ", __LINE__);
+            // printf("%d ", __LINE__);
             printf("Error type 2 at Line %d: Undefined function \"%s\".\n", x->line, x->children[0]->data_string_data);
             return NULL;
         }
@@ -594,7 +594,7 @@ TypeP Exp(NodeP x) {
                 return id_function->return_type;
         }
 
-        printf("%d ", __LINE__);
+        // printf("%d ", __LINE__);
         printf("Error type 9 at Line %d: Inappliable arguments for function \"%s\".\n", x->line, id_function->name);
         return NULL;
     }
