@@ -69,6 +69,8 @@ void translate_print(FILE* f) {
         if (x->kind == ILABEL) {
             fprintf(f, "LABEL label%d :", x->ulabel.op->id);
         } else if (x->kind == IFUNCTION) {
+            if (x->prev)
+                fprintf(f, "\n");
             fprintf(f, "FUNCTION %s :", x->ulabel.op->u_char);
         } else if (x->kind == ASSIGN) {
             OperandP t1 = x->uassign.op1;
@@ -172,8 +174,6 @@ void translate_print(FILE* f) {
                 fprintf(f, "#%d", x->ulabel.op->id);
             else if (x->ulabel.op->kind == ADDRESS)
                 fprintf(f, "&t%d", x->ulabel.op->id);
-            else if (x->ulabel.op->kind == WADDRESS)
-                fprintf(f, "*t%d", x->ulabel.op->id);
             else
                 fprintf(f, "t%d", x->ulabel.op->id);
         } else if (x->kind == CALL) {
@@ -427,8 +427,6 @@ void translate_Exp(NodeP x, OperandP place) {
                 return;
             OperandP t1 = creat_temp();
             translate_Exp(x->children[1], t1);
-            if (place->kind == FROM_ARG)
-                place->kind = VARIABLE;
             insert_intercode(create_intercode(SUB, INTERCODE_3, place, create_operand(CONSTANT, 0, NULL, NULL), t1));
         }
     } else if (strcmp(x->children[1]->data_string, "ASSIGNOP") == 0) {
@@ -486,10 +484,7 @@ void translate_Exp(NodeP x, OperandP place) {
         insert_intercode(create_intercode(MUL, INTERCODE_3, t2, t3, create_operand(CONSTANT, offset, NULL, NULL)));
         if (place == NULL)
             return;
-        if (place->kind == FROM_ARG)
-            place->kind = WADDRESS;
-        else
-            place->kind = ADDRESS;
+        place->kind = ADDRESS;
         place->type = t1->type->array.elem;
         insert_intercode(create_intercode(ADD, INTERCODE_3, place, t0, t2));
 
@@ -501,12 +496,7 @@ void translate_Exp(NodeP x, OperandP place) {
         if (strcmp(x->children[0]->data_string_data, "write") == 0) {
             OperandP t1 = creat_temp();
             translate_Exp(x->children[2]->children[0], t1);
-            if (t1->kind == ADDRESS) {
-                OperandP t0 = creat_temp();
-                insert_intercode(create_intercode(ADDRASS2, INTERCODE_2, t0, t1));
-                insert_intercode(create_intercode(WRITE, INTERCODE_1, t0));
-            } else
-                insert_intercode(create_intercode(WRITE, INTERCODE_1, t1));
+            insert_intercode(create_intercode(WRITE, INTERCODE_1, t1));
             return;
         }
         translate_Args(x->children[2], NULL);
@@ -526,22 +516,12 @@ void translate_Exp(NodeP x, OperandP place) {
 void translate_Args(NodeP x, InterCodeP prev) {
     // Args -> Exp COMMA Args | Exp
     OperandP t1 = creat_temp();
-    t1->kind = FROM_ARG;
     translate_Exp(x->children[0], t1);
-    if (t1->kind != CONSTANT && t1->kind != ADDRESS && t1->kind != WADDRESS) {
-        VarP var = find_var_table(t1->u_char);
-        if (var == NULL)
-            t1->kind = VARIABLE;
-        else if (var->field->type->type != BASIC)
-            t1->kind = ADDRESS;
-        else
-            t1->kind = VARIABLE;
+    if (t1->kind == TEMP) {
+        t1->kind = VARIABLE;
     }
     InterCodeP intercode = create_intercode(ARG, INTERCODE_1, t1);
-    if (prev == NULL) {
-        intercode->next = NULL;
-        intercode->prev = NULL;
-    } else {
+    if (prev) {
         prev->next = intercode;
         intercode->prev = prev;
     }
@@ -551,18 +531,10 @@ void translate_Args(NodeP x, InterCodeP prev) {
 }
 
 int get_offset(TypeP return_type) {
-    if (return_type == NULL)
-        return 0;
     if (return_type->type == BASIC)
         return 4;
-    else if (return_type->type == ARRAY) {
-        if (return_type->array.elem->type == ARRAY) {
-            // interim_error = 1;
-            printf("Cannot translate: Code contains variables of error array type.\n");
-            return -1;
-        }
+    else if (return_type->type == ARRAY)
         return get_size(return_type->array.elem);
-    }
 }
 
 int get_size(TypeP type) {

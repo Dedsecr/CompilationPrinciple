@@ -15,8 +15,6 @@
 typedef struct Operand* OperandP;
 typedef struct InterCode* InterCodeP;
 
-// FROM_ARG用于传递给exp的arg，因为做为函数参数时的temp,temp[2]都会返回address
-//但实际上，temp[2]应返回basic
 // VARIABLE普通函数参数,char+int
 //先查询符号表中是否以及给该变量var值
 // TEMP临时变量
@@ -24,12 +22,10 @@ typedef struct InterCode* InterCodeP;
 // ADDRESS数组做为函数参数char+int
 // WADDRESS写入地址，
 enum KindOperand {
-    FROM_ARG,
     VARIABLE,
     TEMP,
     CONSTANT,
     ADDRESS,
-    WADDRESS,
     FUNCTION,
     LABEL,
     RELOP

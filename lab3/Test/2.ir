@@ -12,6 +12,7 @@ t9 := CALL fact
 t7 := t1 * t9
 RETURN t7
 LABEL label3 :
+
 FUNCTION main :
 READ t15
 t2 := t15
