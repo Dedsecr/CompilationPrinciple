@@ -15,12 +15,6 @@
 typedef struct Operand* OperandP;
 typedef struct InterCode* InterCodeP;
 
-// VARIABLE普通函数参数,char+int
-//先查询符号表中是否以及给该变量var值
-// TEMP临时变量
-// CONSTANT常数
-// ADDRESS数组做为函数参数char+int
-// WADDRESS写入地址，
 enum KindOperand {
     VARIABLE,
     TEMP,
@@ -31,11 +25,6 @@ enum KindOperand {
     RELOP
 };
 
-// PARAM打印param v+id
-// ASSIGN打印：注意立即数
-// ADDRASS2打印：t2=*t1
-// ADDRADD3其实是在赋值语句中，如果左为address,右为其他的话
-// ARG打印：如果address就&，不是则正常
 enum KindInterCode {
     ILABEL,
     IFUNCTION,
@@ -61,23 +50,23 @@ enum KindInterCode {
 struct Operand {
     enum KindOperand kind;
     int id;
-    char* u_char;
+    char* name;
     TypeP type;  // for offset
 };
 
 struct InterCode {
     enum KindInterCode kind;
-    // LABEL,FUNCTION,GOTO,RETURN,ARG
-    // PARAM,READ,WRITE
+    // LABEL, FUNCTION, GOTO, RETURN, ARG
+    // PARAM, READ, WRITE
     struct {
         OperandP op;
     } ulabel;
-    // ASSIGN,CALL
-    // ADDRASS1,ADDRASS2,ADDRASS3
+    // ASSIGN, CALL
+    // ADDRASS1, ADDRASS2, ADDRASS3
     struct {
         OperandP op1, op2;
     } uassign;
-    // ADD,SUB,MUL,DIV
+    // ADD, SUB, MUL, DIV
     struct {
         OperandP result, op1, op2;
     } ubinop;
@@ -93,7 +82,7 @@ struct InterCode {
     InterCodeP prev, next;
 };
 
-OperandP create_operand(enum KindOperand kind, int id, char* u_char, TypeP type);
+OperandP create_operand(enum KindOperand kind, int id, char* name, TypeP type);
 InterCodeP create_intercode(enum KindInterCode kind, int intercode_type, ...);
 OperandP creat_temp();
 OperandP creat_label();

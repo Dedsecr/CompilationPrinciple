@@ -4,11 +4,11 @@ extern int temp_cnt;
 int label_cnt = 1;
 InterCodeP ic_link_head = NULL, ic_link_now = NULL;
 
-OperandP create_operand(enum KindOperand kind, int id, char* u_char, TypeP type) {
+OperandP create_operand(enum KindOperand kind, int id, char* name, TypeP type) {
     OperandP op = (OperandP)malloc(sizeof(struct Operand));
     op->kind = kind;
     op->id = id;
-    op->u_char = u_char;
+    op->name = name;
     op->type = type;
     return op;
 }
@@ -71,7 +71,7 @@ void translate_print(FILE* f) {
         } else if (x->kind == IFUNCTION) {
             if (x->prev)
                 fprintf(f, "\n");
-            fprintf(f, "FUNCTION %s :", x->ulabel.op->u_char);
+            fprintf(f, "FUNCTION %s :", x->ulabel.op->name);
         } else if (x->kind == ASSIGN) {
             OperandP t1 = x->uassign.op1;
             OperandP t2 = x->uassign.op2;
@@ -184,7 +184,7 @@ void translate_print(FILE* f) {
                 OperandP t0 = creat_temp();
                 fprintf(f, "t%d := ", t0->id);
             }
-            fprintf(f, "CALL %s", t2->u_char);
+            fprintf(f, "CALL %s", t2->name);
         } else if (x->kind == PARAM) {
             fprintf(f, "PARAM ");
             if (x->ulabel.op->kind == CONSTANT)
@@ -312,7 +312,7 @@ void translate_Dec(NodeP x) {
 void translate_VarDec(NodeP x, OperandP place) {
     // VarDec -> ID | VarDec LB INT RB
     place->kind = VARIABLE;
-    place->u_char = x->children[0]->data_string_data;
+    place->name = x->children[0]->data_string_data;
     if (x->child_num == 1) {
         // VarDec -> ID
         VarP var = find_var_table(x->children[0]->data_string_data);
@@ -416,7 +416,7 @@ void translate_Exp(NodeP x, OperandP place) {
                 place->kind = ADDRESS;
             else
                 place->kind = VARIABLE;
-            place->u_char = x->children[0]->data_string_data;
+            place->name = x->children[0]->data_string_data;
             place->id = var->variable_cnt;
             place->type = var->field->type;
         }
