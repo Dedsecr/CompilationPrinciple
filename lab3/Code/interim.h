@@ -56,13 +56,11 @@ struct Operand {
 
 struct InterCode {
     enum KindInterCode kind;
-    // LABEL, FUNCTION, GOTO, RETURN, ARG
-    // PARAM, READ, WRITE
+    // LABEL, FUNCTION, GOTO, RETURN, ARG, PARAM, READ, WRITE
     struct {
         OperandP op;
     } ulabel;
-    // ASSIGN, CALL
-    // ADDRASS1, ADDRASS2, ADDRASS3
+    // ASSIGN, CALL, ADDRASS1, ADDRASS2, ADDRASS3
     struct {
         OperandP op1, op2;
     } uassign;
